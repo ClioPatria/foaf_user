@@ -1,1 +1,1 @@
-config(account, link).
+config(foaf_user, link).

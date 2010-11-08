@@ -1,5 +1,5 @@
 :- module(conf_account, []).
-:- use_module(account(applications/user_account)).
+:- use_module(account(applications/foaf_user_profile)).
 :- use_module(user(user_db)).
 :- use_module(cliopatria(hooks)).
 

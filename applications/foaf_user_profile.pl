@@ -28,7 +28,7 @@
     the GNU General Public License.
 */
 
-:- module(foaf_profile, []).
+:- module(foaf_user_profile, []).
 :- use_bundle(html_page).
 :- use_module(user(user_db)).
 :- use_module(library(semweb/rdf_db)).
