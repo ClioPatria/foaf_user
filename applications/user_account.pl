@@ -28,62 +28,106 @@
     the GNU General Public License.
 */
 
-:- module(user_account, []).
+:- module(foaf_profile, []).
 :- use_bundle(html_page).
 :- use_module(user(user_db)).
+:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_label)).
 
-:- http_handler(root('user/edit_user'), edit_user_form, []).
-:- http_handler(api(update_user),       update_user,    []).
+:- rdf_register_ns(foaf, 'http://xmlns.com/foaf/0.1/').
 
-/** <module> User account management
+:- http_handler(root('user/foaf_profile_form'),	foaf_profile_form,   []).
+:- http_handler(api(update_foaf_profile),	update_foaf_profile, []).
+
+/** <module> Manage a FOAF profile
 */
 
-edit_user_form(Request) :-
-	http_parameters(Request,
-			[ r(UserURI,
-			    [ description('OpenID URI of the user')
-			    ])
-			]),
+foaf_profile_form(_Request) :-
+	ensure_logged_on(User),
+	user_property(User, url(UserURI)),
 	authorized(write(user, UserURI)),
 	reply_html_page(cliopatria(user),
-			title('Edit user info'),
-			[ h1('Edit user info'),
-			  \user_form(UserURI)
+			title('Edit FOAF profile'),
+			[ h1('Edit FOAF profile'),
+			  \foaf_profile_form(User)
 			]).
 
 
-user_form(UserURI) -->
-	{ user_property(User, uri(UserURI)),
-	  user_property(User, realname(RealName))
+foaf_profile_form(User) -->
+	{ user_property(User, url(UserURI)),
+	  foaf_set_defaults(User)
 	},
-	html(form(action(location_by_id(update_user)),
+	html(form(action(location_by_id(update_foaf_profile)),
 		  table(class(form),
 			[ \hidden(r, UserURI),
-			  \form_input('Real name',
-				      input([ disabled,
-					      value(RealName),
-					      name(realname),
-					      size(50)
-					    ])),
+			  \p_input(UserURI, foaf:name, []),
+			  \p_input(UserURI, foaf:nick, [disabled]),
+			  \p_input(UserURI, foaf:workInfoHomepage, []),
 			  \form_submit('Update account')
 			]))).
+
+foaf_set_defaults(User) :-
+	user_property(User, url(UserURI)),
+	(   rdf(UserURI, foaf:name, _)
+	->  true
+	;   user_property(User, realname(Name)),
+	    rdf_assert(UserURI, foaf:name, literal(Name), UserURI)
+	),
+	(   rdf(UserURI, foaf:nick, _)
+	->  true
+	;   rdf_assert(UserURI, foaf:nick, literal(User), UserURI)
+	).
+
+
+p_input(URI, P0, Options) -->
+	{ rdf_global_id(P0, P),
+	  rdf_display_label(P, Label),
+	  (   rdf(URI, P, Value)
+	  ->  (   rdf_has(P, rdf:type, owl:'ObjectProperty')
+	      ->  Text = Value
+	      ;	  literal_text(Value, Text)
+	      )
+	  ->  Extra = [value(Text)|Options]
+	  ;   Extra = Options
+	  )
+	},
+	form_input(Label,
+		   input([ name(P),
+			   size(50)
+			 | Extra
+			 ])).
 
 
 		 /*******************************
 		 *	         API		*
 		 *******************************/
 
-update_user(Request) :-
+update_foaf_profile(Request) :-
 	http_parameters(Request,
 			[ r(UserURI,
-			    [ description('OpenID URI of the user')
-			    ]),
-			  realname(_RealName,
-				   [ optional(true),
-				     description('Real name of the user')
-				   ])
+			    [ description('OpenID/FOAF URI of the user')
+			    ])
+			],
+			[ form_data(Form)
 			]),
-	authorized(write(user, UserURI)).
+	authorized(write(user, UserURI)),
+	maplist(update_user(UserURI), Form),
+	reply_html_page(cliopatria(user),
+			title('FOAF profile updated'),
+			[ h1('FOAF profile updated')
+			]).
+
+
+update_user(_, r=_) :- !.
+update_user(UserURI, P=Value) :-
+	rdf_has(P, rdfs:isDefinedBy, foaf:''), !,
+	rdf_retractall(UserURI, P, _),
+	(   rdf_has(P, rdf:type, owl:'ObjectProperty')
+	->  rdf_assert(UserURI, P, Value, UserURI)
+	;   rdf_assert(UserURI, P, literal(Value), UserURI)
+	).
+update_user(_, P=_) :-
+	existence_error(foaf_property, P).
 
 
 

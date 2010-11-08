@@ -9,5 +9,5 @@
 cliopatria:menu_popup_order(cpack, 250).
 cliopatria:menu_label(cpack, 'CPACK').
 
-cliopatria:menu_item(250=current_user/edit_user_form, 'My account') :-
+cliopatria:menu_item(250=current_user/foaf_profile_form, 'FOAF profile') :-
 	logged_on(_).
