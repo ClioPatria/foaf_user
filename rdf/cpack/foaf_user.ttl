@@ -6,12 +6,17 @@
 <> a cpack:Application ;
 	cpack:name "user_foaf" ;
 	dcterms:title "FOAF profiles for accounts" ;
-	cpack:description """Manage and view local accounts as FOAF profiles""" ;
 	cpack:author <http://www.swi-prolog.org/cliopatria/user/jan> ;
 	cpack:primaryRepository
 	    [ a cpack:GitRepository ;
 	      cpack:gitURL <git://eculture.cs.vu.nl/home/janw/git/ClioPatria/foaf_user.git>
-	    ] .
+	    ] ;
+	cpack:requires [ cpack:name "foaf" ] ;
+	cpack:description
+
+"""Manage and view local accounts as FOAF profiles
+""" ;
+
 
 
 
