@@ -15,7 +15,7 @@
 	cpack:description
 
 """Manage and view local accounts as FOAF profiles
-""" ;
+""" .
 
 
 
