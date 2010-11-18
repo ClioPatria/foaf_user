@@ -62,6 +62,7 @@ foaf_profile_form(User) -->
 			[ \hidden(r, UserURI),
 			  \p_input(UserURI, foaf:name, []),
 			  \p_input(UserURI, foaf:nick, [disabled]),
+			  \p_input(UserURI, foaf:mbox, []),
 			  \p_input(UserURI, foaf:workInfoHomepage, []),
 			  \form_submit('Update account')
 			]))).

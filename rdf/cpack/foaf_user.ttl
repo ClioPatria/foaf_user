@@ -1,12 +1,15 @@
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
 @prefix cpack:   <http://www.swi-prolog.org/cliopatria/cpack#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 
 <> a cpack:Application ;
 	cpack:packageName "foaf_user" ;
 	dcterms:title "FOAF profiles for accounts" ;
-	cpack:author <http://www.swi-prolog.org/cliopatria/user/jan> ;
+	cpack:author [ foaf:name "Jan Wielemaker" ;
+		       foaf:mbox "J.Wielemaker@cs.vu.nl" ;
+		     ] ;
 	cpack:primaryRepository
 	    [ a cpack:GitRepository ;
 	      cpack:gitURL <git://eculture.cs.vu.nl/home/janw/git/ClioPatria/foaf_user.git>
