@@ -32,6 +32,7 @@
 :- use_bundle(html_page).
 :- use_module(user(user_db)).
 :- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdfs)).
 :- use_module(library(semweb/rdf_label)).
 
 :- rdf_register_ns(foaf, 'http://xmlns.com/foaf/0.1/').
@@ -41,6 +42,11 @@
 
 /** <module> Manage a FOAF profile
 */
+
+%%	foaf_profile_form(+Request)
+%
+%	HTTP handler that creates a form  for editing the most important
+%	FOAF attributes of a person.
 
 foaf_profile_form(_Request) :-
 	ensure_logged_on(User),
@@ -69,6 +75,10 @@ foaf_profile_form(User) -->
 
 foaf_set_defaults(User) :-
 	user_property(User, url(UserURI)),
+	(   rdfs_individual_of(UserURI, foaf:'Person')
+	->  true
+	;   rdf_assert(UserURI, rdf:type, foaf:'Person')
+	),
 	(   rdf(UserURI, foaf:name, _)
 	->  true
 	;   user_property(User, realname(Name)),
@@ -103,6 +113,10 @@ p_input(URI, P0, Options) -->
 		 *	         API		*
 		 *******************************/
 
+%%	update_foaf_profile(+Request)
+%
+%	Handle update from foaf_profile_form/1.
+
 update_foaf_profile(Request) :-
 	http_parameters(Request,
 			[ r(UserURI,
@@ -120,6 +134,14 @@ update_foaf_profile(Request) :-
 
 
 update_user(_, r=_) :- !.
+update_user(UserURI, P=Value) :-
+	rdf_equal(P, foaf:mbox), !,
+	rdf_retractall(UserURI, P, _),
+	(   sub_atom(Value, 0, _, _, 'mailto:')
+	->  MBOX = Value
+	;   atom_concat('mailto:', Value, MBOX)
+	),
+	rdf_assert(UserURI, P, MBOX, UserURI).
 update_user(UserURI, P=Value) :-
 	rdf_has(P, rdfs:isDefinedBy, foaf:''), !,
 	rdf_retractall(UserURI, P, _),

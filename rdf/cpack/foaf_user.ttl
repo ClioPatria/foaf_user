@@ -8,7 +8,7 @@
 	cpack:packageName "foaf_user" ;
 	dcterms:title "FOAF profiles for accounts" ;
 	cpack:author [ foaf:name "Jan Wielemaker" ;
-		       foaf:mbox "J.Wielemaker@cs.vu.nl" ;
+		       foaf:mbox <mailto:j.wielemaker@cs.vu.nl> ;
 		     ] ;
 	cpack:primaryRepository
 	    [ a cpack:GitRepository ;
