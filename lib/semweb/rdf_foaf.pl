@@ -29,9 +29,60 @@
 */
 
 :- module(rdf_foaf,
-	  [ foaf_mbox_hash/2		% +MBOX, -Hash
+	  [ foaf_mbox_hash/2,		% +MBOX, -Hash
+	    foaf_add_mbox_hash/1,	% ?URI
+	    foaf_merge/1		% ?URI
 	  ]).
+:- use_module(library(semweb/rdf_db)).
 :- use_module(library(sha)).
+
+/** <module> FOAF reasoning
+
+This module provides some  routines  to   support  reasoning  about FOAF
+RDF.
+*/
+
+%%	foaf_merge(?URI) is det.
+%
+%	Create owl:sameAs links from other foaf   profiles that refer to
+%	the same person.  The  reasoning  is   currently  based  on  the
+%	foaf:mbox only. This first  uses   foaf_add_mbox_hash/1  to make
+%	sure that all foaf:Person  instances   have  a foaf:mbox_sha1sum
+%	property.
+%
+%	@param	URI is the foaf:Person for which to discover equivalents.
+%		If this is omitted, equivalents are created for each
+%		instance of foaf:Person.
+
+foaf_merge(URI) :-
+	foaf_add_mbox_hash(_),
+	rdf_transaction(foaf_merge_raw(URI)).
+
+foaf_merge_raw(URI) :-
+	forall((rdf_has(URI, foaf:mbox_sha1sum, Hash),
+		rdf_has(URI2, foaf:mbox_sha1sum, Hash, Graph),
+		URI \== URI2),
+	       rdf_assert(URI2, owl:sameAs, URI, Graph)).
+
+
+%%	foaf_add_mbox_hash(?URI) is det.
+%
+%	Add foaf:mbox_sha1sum properties where they are not provided but
+%	there is a foaf:mbox.
+%
+%	@param	URI is the URI of a foaf:Person.  If it is unbound, all
+%		instances of foaf:Person are processed.
+
+foaf_add_mbox_hash(URI) :-
+	rdf_transaction(foaf_add_mbox_hash_raw(URI)).
+
+foaf_add_mbox_hash_raw(URI) :-
+	forall((rdf(URI, foaf:mbox, MBOX, DB),
+		rdf_is_resource(MBOX),
+		\+ rdf(URI, foaf:mbox_sha1sum, _)),
+	       (foaf_mbox_hash(MBOX, Hash),
+		rdf_assert(URI, foaf:mbox_sha1sum, literal(Hash), DB))).
+
 
 %%	foaf_mbox_hash(+MBox, -Hash) is det.
 %
