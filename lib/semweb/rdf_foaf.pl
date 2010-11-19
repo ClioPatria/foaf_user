@@ -61,7 +61,8 @@ foaf_merge(URI) :-
 foaf_merge_raw(URI) :-
 	forall((rdf(URI, foaf:mbox_sha1sum, Hash),
 		rdf(URI2, foaf:mbox_sha1sum, Hash, Graph),
-		URI \== URI2),
+		URI \== URI2,
+		\+ rdf(URI2, owl:sameAs, URI)),
 	       rdf_assert(URI2, owl:sameAs, URI, Graph)).
 
 
