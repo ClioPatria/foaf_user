@@ -28,14 +28,12 @@
     the GNU General Public License.
 */
 
-:- module(foaf_user_profile,
-	  [ foaf_mbox_hash/2		% +MBOX, -Hash
-	  ]).
+:- module(foaf_user_profile, []).
 :- use_bundle(html_page).
 :- use_module(user(user_db)).
 :- use_module(library(error)).
 :- use_module(library(option)).
-:- use_module(library(sha)).
+:- use_module(library(semweb/rdf_foaf)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(semweb/rdfs)).
 :- use_module(library(semweb/rdf_label)).
@@ -166,25 +164,3 @@ update_user(UserURI, P=Value) :-
 	).
 update_user(_, P=_) :-
 	existence_error(foaf_property, P).
-
-
-%%	foaf_mbox_hash(+MBox, -Hash) is det.
-%
-%	Create a FOAF compatible hash  for   the  mailbox.  Note that it
-%	seems    http://www.ldodds.com/foaf/foaf-a-matic    creates    a
-%	case-sensitive hash. We create a   case-insensative hash because
-%	E-mail addresses are cases-insensative.
-
-foaf_mbox_hash(Mbox, Hash) :-
-	downcase_atom(Mbox, Code),
-	sha_hash(Code, Bytes, []),
-	hex_codes(Bytes, Hex),
-	atom_codes(Hash, Hex).
-
-hex_codes([], []).
-hex_codes([H|T0], [C1,C2|T]) :-
-	V1 is H >> 4,
-	V2 is H mod 0xf,
-	code_type(C1, xdigit(V1)),
-	code_type(C2, xdigit(V2)),
-	hex_codes(T0, T).
