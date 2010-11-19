@@ -144,23 +144,34 @@ update_foaf_profile(Request) :-
 			]).
 
 
+:- rdf_meta
+	rdf_set_object(r,r,o,r).
+
 update_user(_, r=_) :- !.
 update_user(UserURI, P=Value) :-
 	rdf_equal(P, foaf:mbox), !,
-	rdf_retractall(UserURI, P, _),
 	(   sub_atom(Value, 0, _, _, 'mailto:')
 	->  MBOX = Value
 	;   atom_concat('mailto:', Value, MBOX)
 	),
 	foaf_mbox_hash(MBOX, Hash),
-	rdf_assert(UserURI, foaf:mbox_sha1sum, literal(Hash), UserURI),
-	rdf_assert(UserURI, P, MBOX, UserURI).
+	rdf_set_object(UserURI, foaf:mbox_sha1sum, literal(Hash), UserURI),
+	rdf_set_object(UserURI, P, MBOX, UserURI).
 update_user(UserURI, P=Value) :-
 	rdf_has(P, rdfs:isDefinedBy, foaf:''), !,
 	rdf_retractall(UserURI, P, _),
 	(   rdf_has(P, rdf:type, owl:'ObjectProperty')
-	->  rdf_assert(UserURI, P, Value, UserURI)
-	;   rdf_assert(UserURI, P, literal(Value), UserURI)
+	->  rdf_set_object(UserURI, P, Value, UserURI)
+	;   rdf_set_object(UserURI, P, literal(Value), UserURI)
 	).
 update_user(_, P=_) :-
 	existence_error(foaf_property, P).
+
+rdf_set_object(S,P,O,G) :-
+	rdf(S,P,O1,G), !,
+	(   O == O1
+	->  true
+	;   rdf_update(S,P,O1,G,object(O))
+	).
+rdf_set_object(S,P,O,G) :-
+	rdf_assert(S,P,O,G).
