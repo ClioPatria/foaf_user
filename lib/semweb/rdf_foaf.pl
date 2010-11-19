@@ -59,8 +59,8 @@ foaf_merge(URI) :-
 	rdf_transaction(foaf_merge_raw(URI)).
 
 foaf_merge_raw(URI) :-
-	forall((rdf_has(URI, foaf:mbox_sha1sum, Hash),
-		rdf_has(URI2, foaf:mbox_sha1sum, Hash, Graph),
+	forall((rdf(URI, foaf:mbox_sha1sum, Hash),
+		rdf(URI2, foaf:mbox_sha1sum, Hash, Graph),
 		URI \== URI2),
 	       rdf_assert(URI2, owl:sameAs, URI, Graph)).
 
