@@ -77,7 +77,7 @@ foaf_set_defaults(User) :-
 	user_property(User, url(UserURI)),
 	(   rdfs_individual_of(UserURI, foaf:'Person')
 	->  true
-	;   rdf_assert(UserURI, rdf:type, foaf:'Person')
+	;   rdf_assert(UserURI, rdf:type, foaf:'Person', UserURI)
 	),
 	(   rdf(UserURI, foaf:name, _)
 	->  true
