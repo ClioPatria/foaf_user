@@ -28,9 +28,14 @@
     the GNU General Public License.
 */
 
-:- module(foaf_user_profile, []).
+:- module(foaf_user_profile,
+	  [ foaf_mbox_hash/2		% +MBOX, -Hash
+	  ]).
 :- use_bundle(html_page).
 :- use_module(user(user_db)).
+:- use_module(library(error)).
+:- use_module(library(option)).
+:- use_module(library(sha)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(library(semweb/rdfs)).
 :- use_module(library(semweb/rdf_label)).
@@ -41,6 +46,13 @@
 :- http_handler(api(update_foaf_profile),	update_foaf_profile, []).
 
 /** <module> Manage a FOAF profile
+
+This application lets you manage your  login   on  ClioPatria  as a FOAF
+profile. It is very incomplete,  but   serves  the purpose of collecting
+basic information about committers and users   while  restricting to the
+FOAF vocabulary.
+
+@see	http://www.ldodds.com/foaf/foaf-a-matic
 */
 
 %%	foaf_profile_form(+Request)
@@ -69,6 +81,7 @@ foaf_profile_form(User) -->
 			  \p_input(UserURI, foaf:name, []),
 			  \p_input(UserURI, foaf:nick, [disabled]),
 			  \p_input(UserURI, foaf:mbox, []),
+			  \p_input(UserURI, foaf:mbox_sha1sum, [disabled]),
 			  \p_input(UserURI, foaf:workInfoHomepage, []),
 			  \form_submit('Update account')
 			]))).
@@ -141,6 +154,8 @@ update_user(UserURI, P=Value) :-
 	->  MBOX = Value
 	;   atom_concat('mailto:', Value, MBOX)
 	),
+	foaf_mbox_hash(MBOX, Hash),
+	rdf_assert(UserURI, foaf:mbox_sha1sum, literal(Hash), UserURI),
 	rdf_assert(UserURI, P, MBOX, UserURI).
 update_user(UserURI, P=Value) :-
 	rdf_has(P, rdfs:isDefinedBy, foaf:''), !,
@@ -153,4 +168,23 @@ update_user(_, P=_) :-
 	existence_error(foaf_property, P).
 
 
+%%	foaf_mbox_hash(+MBox, -Hash) is det.
+%
+%	Create a FOAF compatible hash  for   the  mailbox.  Note that it
+%	seems    http://www.ldodds.com/foaf/foaf-a-matic    creates    a
+%	case-sensitive hash. We create a   case-insensative hash because
+%	E-mail addresses are cases-insensative.
 
+foaf_mbox_hash(Mbox, Hash) :-
+	downcase_atom(Mbox, Code),
+	sha_hash(Code, Bytes, []),
+	hex_codes(Bytes, Hex),
+	atom_codes(Hash, Hex).
+
+hex_codes([], []).
+hex_codes([H|T0], [C1,C2|T]) :-
+	V1 is H >> 4,
+	V2 is H mod 0xf,
+	code_type(C1, xdigit(V1)),
+	code_type(C2, xdigit(V2)),
+	hex_codes(T0, T).
